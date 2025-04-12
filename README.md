@@ -1,6 +1,6 @@
 # Sales & Production — SQL Server Database
 
-Este projeto contém o script de criação de um banco de dados relacional baseado em um modelo de vendas e produção, projetado para SQL Server. Inclui tabelas para controle de clientes, funcionários, pedidos, produtos, estoque, marcas e categorias, além de consultas úteis para análise de dados.
+Este projeto de teste para CodeGroup que contém o script de criação de um banco de dados relacional baseado em um modelo de vendas e produção, projetado para SQL Server. Inclui tabelas para controle de clientes, funcionários, pedidos, produtos, estoque, marcas e categorias, além de consultas úteis para análise de dados.
 
 ---
 
