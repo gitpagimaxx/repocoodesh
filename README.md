@@ -1,60 +1,200 @@
-# DBA Challenge 20240802
+# Sales & Production — SQL Server Database
+
+Este projeto contém o script de criação de um banco de dados relacional baseado em um modelo de vendas e produção, projetado para SQL Server. Inclui tabelas para controle de clientes, funcionários, pedidos, produtos, estoque, marcas e categorias, além de consultas úteis para análise de dados.
+
+---
 
 
-## Introdução
+### Estrutura do Banco de Dados
 
-Nesse desafio trabalharemos utilizando a base de dados da empresa Bike Stores Inc com o objetivo de obter métricas relevantes para equipe de Marketing e Comercial.
+O banco de dados é dividido em dois domínios:
 
-Com isso, teremos que trabalhar com várioas consultas utilizando conceitos como `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `GROUP BY` e `COUNT`.
+### Sales
+- `customers` — Clientes.
 
-### Antes de começar
- 
-- O projeto deve utilizar a Linguagem específica na avaliação. Por exempo: SQL, T-SQL, PL/SQL e PSQL;
-- Considere como deadline da avaliação a partir do início do teste. Caso tenha sido convidado a realizar o teste e não seja possível concluir dentro deste período, avise a pessoa que o convidou para receber instruções sobre o que fazer.
-- Documentar todo o processo de investigação para o desenvolvimento da atividade (README.md no seu repositório); os resultados destas tarefas são tão importantes do que o seu processo de pensamento e decisões à medida que as completa, por isso tente documentar e apresentar os seus hipóteses e decisões na medida do possível.
- 
- 
+- `staffs` — Funcionários.
 
-## O projeto
+- `stores` — Lojas.
 
-- Criar as consultas utilizando a linguagem escolhida;
-- Entregar o código gerado do Teste.
+- `orders` — Pedidos.
 
-### Modelo de Dados:
+- `order_items` — Itens de pedidos.
 
-Para entender o modelo, revisar o diagrama a seguir:
+### Production
 
-![<img src="samples/model.png" height="500" alt="Modelo" title="Modelo"/>](samples/model.png)
+- `products` — Produtos.
+
+- `categories` — Categorias de produtos.
+
+- `brands` — Marcas.
+
+- `stocks` — Estoque de produtos.
+
+---
+
+### Script de Criação das Tabelas
+
+```sql
+CREATE DATABASE SalesProductionDB;
+GO
+
+USE SalesProductionDB;
+GO
+
+-- Tabelas da área de Sales
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    first_name NVARCHAR(50),
+    last_name NVARCHAR(50),
+    phone NVARCHAR(20),
+    email NVARCHAR(100),
+    street NVARCHAR(100),
+    city NVARCHAR(50),
+    state NVARCHAR(50),
+    zip_code NVARCHAR(10)
+);
+
+CREATE TABLE staffs (
+    staff_id INT PRIMARY KEY,
+    first_name NVARCHAR(50),
+    last_name NVARCHAR(50),
+    email NVARCHAR(100),
+    phone NVARCHAR(20),
+    active BIT,
+    store_id INT,
+    manager_id INT,
+    FOREIGN KEY (store_id) REFERENCES stores(store_id),
+    FOREIGN KEY (manager_id) REFERENCES staffs(staff_id)
+);
+
+CREATE TABLE stores (
+    store_id INT PRIMARY KEY,
+    store_name NVARCHAR(100),
+    phone NVARCHAR(20),
+    email NVARCHAR(100),
+    street NVARCHAR(100),
+    city NVARCHAR(50),
+    state NVARCHAR(50),
+    zip_code NVARCHAR(10)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_status NVARCHAR(20),
+    order_date DATE,
+    required_date DATE,
+    shipped_date DATE,
+    store_id INT,
+    staff_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (store_id) REFERENCES stores(store_id),
+    FOREIGN KEY (staff_id) REFERENCES staffs(staff_id)
+);
+
+CREATE TABLE order_items (
+    order_id INT,
+    item_id INT,
+    product_id INT,
+    quantity INT,
+    list_price DECIMAL(10, 2),
+    discount DECIMAL(5, 2),
+    PRIMARY KEY (order_id, item_id),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+-- Tabelas da área de Production
+CREATE TABLE categories (
+    category_id INT PRIMARY KEY,
+    category_name NVARCHAR(100)
+);
+
+CREATE TABLE brands (
+    brand_id INT PRIMARY KEY,
+    brand_name NVARCHAR(100)
+);
+
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name NVARCHAR(100),
+    brand_id INT,
+    category_id INT,
+    model_year INT,
+    list_price DECIMAL(10, 2),
+    FOREIGN KEY (brand_id) REFERENCES brands(brand_id),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+CREATE TABLE stocks (
+    store_id INT,
+    product_id INT,
+    quantity INT,
+    PRIMARY KEY (store_id, product_id),
+    FOREIGN KEY (store_id) REFERENCES stores(store_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+```
+
+  
+<!-- Espaço adicionado para organização e clareza -->
+## Consultas SQL
+
+### 1) Listar todos os Clientes que não tenham realizado uma compra:
+```sql
+SELECT c.customer_id, c.first_name, c.last_name
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+```
 
 
-## Selects
 
-Construir as seguintes consultas:
+### 2) Listar os Produtos que não tenham sido comprados:
 
-- Listar todos Clientes que não tenham realizado uma compra;
-- Listar os Produtos que não tenham sido comprados
-- Listar os Produtos sem Estoque;
-- Agrupar a quantidade de vendas que uma determinada Marca por Loja. 
-- Listar os Funcionarios que não estejam relacionados a um Pedido.
+```sql
+SELECT p.product_id, p.product_name
+FROM products p
+LEFT JOIN order_items oi ON p.product_id = oi.product_id
+WHERE oi.product_id IS NULL;
+```
 
-## Readme do Repositório
+### 3) Listar os Produtos sem Estoque:
 
-- Deve conter o título do projeto
-- Uma descrição sobre o projeto em frase
-- Deve conter uma lista com linguagem, framework e/ou tecnologias usadas
-- Como instalar e usar o projeto (instruções)
-- Não esqueça o [.gitignore](https://www.toptal.com/developers/gitignore)
-- Se está usando github pessoal, referencie que é um challenge by coodesh:  
+```sql
+SELECT p.product_id, p.product_name
+FROM products p
+LEFT JOIN stocks s ON p.product_id = s.product_id
+WHERE s.product_id IS NULL;
+```
 
->  This is a challenge by [Coodesh](https://coodesh.com/)
+### 4) Agrupar a quantidade de vendas que uma determinada Marca por Loja:
 
-## Finalização e Instruções para a Apresentação
+```sql
+SELECT s.store_name, b.brand_name, COUNT(oi.product_id) AS total_vendas
+FROM order_items oi
+INNER JOIN products p ON oi.product_id = p.product_id
+INNER JOIN brands b ON p.brand_id = b.brand_id
+INNER JOIN orders o ON oi.order_id = o.order_id
+INNER JOIN stores s ON o.store_id = s.store_id
+WHERE b.brand_name = 'NomeDaMarca'
+GROUP BY s.store_name, b.brand_name
+ORDER BY s.store_name, b.brand_name;
+```
 
-1. Adicione o link do repositório com a sua solução no teste
-2. Verifique se o Readme está bom e faça o commit final em seu repositório;
-3. Envie e aguarde as instruções para seguir. Caso o teste tenha apresentação de vídeo, dentro da tela de entrega será possível gravar após adicionar o link do repositório. Sucesso e boa sorte. =)
+### 5) Listar os Funcionários que não estejam relacionados a um Pedido:
+
+```sql
+SELECT s.staff_id, s.first_name, s.last_name
+FROM staffs s
+LEFT JOIN orders o ON s.staff_id = o.staff_id
+WHERE o.order_id IS NULL;
+```
 
 
-## Suporte
+## Observações
+- Banco de dados projetado para estudos de modelagem, análise de dados e práticas de SQL.
 
-Para tirar dúvidas sobre o processo envie uma mensagem diretamente a um especialista no chat da plataforma. 
+- Compatível com SQL Server 2017 ou superior.
+
+- Você pode popular as tabelas com dados fictícios para treinar consultas.
